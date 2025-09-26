@@ -129,7 +129,7 @@ export default function ClientView() {
       )}
 
       {hasCameraPermission && !isConnected && (
-         <div className="absolute top-2 left-2 flex items-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm">
+         <div className="absolute top-2 right-2 flex items-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm">
             {!offer && (
               <Button onClick={createOffer} size="sm" disabled={!hasCameraPermission || !!offer}>
                 <QrCode className="mr-2"/> Create Offer
