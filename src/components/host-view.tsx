@@ -19,7 +19,7 @@ export default function HostView() {
   const wakeLock = useRef<WakeLockSentinel | null>(null);
   const { toast } = useToast();
 
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const [offer, setOffer] = useState('');
   const [answer, setAnswer] = useState('');
@@ -113,16 +113,8 @@ export default function HostView() {
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/50 z-10">
             <Card className="w-full max-w-md bg-background/80 backdrop-blur-sm">
                 <CardHeader>
-                    <div className='flex justify-between items-start'>
-                      <div>
-                        <CardTitle>Connect to Client</CardTitle>
-                        <CardDescription>Follow the steps to establish a connection.</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/50">
-                          <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                          <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
-                      </div>
-                    </div>
+                    <CardTitle>Connect to Client</CardTitle>
+                    <CardDescription>Follow the steps to establish a connection.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
@@ -172,14 +164,12 @@ export default function HostView() {
       </div>
       )}
 
-      {isConnected && (
-         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm z-10">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
-              <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
-              <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
-          </div>
-         </div>
-      )}
+      <div className="absolute top-4 right-4 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm z-10">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
+            <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
+            <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
+        </div>
+      </div>
 
       <div
         className="absolute top-1/4 left-4 flex items-center gap-1 p-2 rounded-lg backdrop-blur-md"
