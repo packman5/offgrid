@@ -67,19 +67,31 @@ export default function ClientView() {
   }, [toast]);
 
   const handleCommand = (command: any) => {
+    const stream = videoRef.current?.srcObject as MediaStream;
+    if (!stream) return;
+
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack || !('applyConstraints' in videoTrack)) return;
+
     if (command.type === 'flash') {
-      const stream = videoRef.current?.srcObject as MediaStream;
-      if (stream) {
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack && 'applyConstraints' in videoTrack) {
-          videoTrack.applyConstraints({
-            advanced: [{ torch: command.value }]
-          }).catch(e => {
-            console.error('Error applying flashlight constraint:', e)
-            toast({ variant: 'destructive', title: "Flashlight Error", description: "This device may not support controlling the flashlight." });
-          });
-        }
+      const capabilities = videoTrack.getCapabilities();
+      if (capabilities.torch) {
+        videoTrack.applyConstraints({
+          advanced: [{ torch: command.value }]
+        }).catch(e => {
+          console.error('Error applying flashlight constraint:', e)
+          toast({ variant: 'destructive', title: "Flashlight Error", description: "This device may not support controlling the flashlight." });
+        });
       }
+    } else if (command.type === 'zoom') {
+        const capabilities = videoTrack.getCapabilities();
+        if (capabilities.zoom) {
+            videoTrack.applyConstraints({
+                advanced: [{ zoom: command.value }]
+            }).catch(e => {
+                console.error('Error applying zoom constraint:', e);
+            });
+        }
     }
   };
 

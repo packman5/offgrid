@@ -48,14 +48,18 @@ export default function HostView() {
       peerConnectionRef.current?.close();
     };
   }, []);
-
+  
   const sendCommand = (command: object) => {
     if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
       dataChannelRef.current.send(JSON.stringify(command));
-    } else {
-      console.log("Data channel is not open.");
     }
   };
+  
+  useEffect(() => {
+      if (isConnected) {
+          sendCommand({ type: 'zoom', value: zoom });
+      }
+  }, [zoom, isConnected]);
 
   const toggleFlash = () => {
     const newFlashState = !isFlashOn;
@@ -116,7 +120,7 @@ export default function HostView() {
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center bg-black relative">
-       <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" style={{ transform: `scale(${zoom})`, display: isConnected ? 'block' : 'none' }} />
+       <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" style={{ display: isConnected ? 'block' : 'none' }} />
        {videoPlaceholder && !isConnected && (
           <Image
             src={videoPlaceholder.imageUrl}
@@ -125,7 +129,6 @@ export default function HostView() {
             priority
             data-ai-hint={videoPlaceholder.imageHint}
             className="transition-transform duration-300 ease-in-out object-cover"
-            style={{ transform: `scale(${zoom})` }}
           />
       )}
       
@@ -221,6 +224,7 @@ export default function HostView() {
               value={[zoom]}
               onValueChange={(value) => setZoom(value[0])}
               className="h-full"
+              disabled={!isConnected}
             />
         </div>
         <div className="h-24 w-8 flex flex-col items-center justify-center text-white">
