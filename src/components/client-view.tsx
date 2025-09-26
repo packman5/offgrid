@@ -151,14 +151,14 @@ export default function ClientView() {
               </Dialog>
             )}
 
+            <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer || isConnected}>
+                <ScanLine className="mr-2" /> Scan Answer
+            </Button>
+
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
                 <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
                 <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
             </div>
-
-            <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer || isConnected}>
-                <ScanLine className="mr-2" /> Scan Answer
-            </Button>
          </div>
       )}
       
