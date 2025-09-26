@@ -21,6 +21,7 @@ export default function HostView() {
 
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const [offer, setOffer] = useState('');
   const [answer, setAnswer] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -47,6 +48,20 @@ export default function HostView() {
       peerConnectionRef.current?.close();
     };
   }, []);
+
+  const sendCommand = (command: object) => {
+    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
+      dataChannelRef.current.send(JSON.stringify(command));
+    } else {
+      console.log("Data channel is not open.");
+    }
+  };
+
+  const toggleFlash = () => {
+    const newFlashState = !isFlashOn;
+    setIsFlashOn(newFlashState);
+    sendCommand({ type: 'flash', value: newFlashState });
+  }
   
   const createAnswer = async (offerData: string) => {
     if (!offerData) return;
@@ -58,6 +73,11 @@ export default function HostView() {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
     peerConnectionRef.current = pc;
+
+    const dc = pc.createDataChannel("controls");
+    dataChannelRef.current = dc;
+    dc.onopen = () => console.log("Data channel open");
+    dc.onclose = () => console.log("Data channel closed");
     
     pc.ontrack = (event) => {
         if (remoteVideoRef.current) {
@@ -179,7 +199,8 @@ export default function HostView() {
             variant="ghost"
             size="icon"
             className="rounded-full text-white w-10 h-10 hover:bg-white/20"
-            onClick={() => setIsFlashOn(!isFlashOn)}
+            onClick={toggleFlash}
+            disabled={!isConnected}
         >
             {isFlashOn ? <ZapOff size={24} /> : <Zap size={24} />}
         </Button>

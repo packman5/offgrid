@@ -17,6 +17,7 @@ export default function ClientView() {
 
   const [offer, setOffer] = useState('');
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isScanningAnswer, setIsScanningAnswer] = useState(false);
 
@@ -65,11 +66,42 @@ export default function ClientView() {
 
   }, [toast]);
 
+  const handleCommand = (command: any) => {
+    if (command.type === 'flash') {
+      const stream = videoRef.current?.srcObject as MediaStream;
+      if (stream) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && 'applyConstraints' in videoTrack) {
+          videoTrack.applyConstraints({
+            advanced: [{ torch: command.value }]
+          }).catch(e => {
+            console.error('Error applying flashlight constraint:', e)
+            toast({ variant: 'destructive', title: "Flashlight Error", description: "This device may not support controlling the flashlight." });
+          });
+        }
+      }
+    }
+  };
+
+
   const createOffer = async () => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
     peerConnectionRef.current = pc;
+
+    pc.ondatachannel = (event) => {
+      const dc = event.channel;
+      dataChannelRef.current = dc;
+      dc.onmessage = (event) => {
+        try {
+          const command = JSON.parse(event.data);
+          handleCommand(command);
+        } catch (e) {
+          console.error("Failed to parse command", e)
+        }
+      };
+    };
 
     pc.onicecandidate = event => {
       if (!event.candidate) {
@@ -154,7 +186,7 @@ export default function ClientView() {
             <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer || isConnected}>
                 <ScanLine className="mr-2" /> Scan Answer
             </Button>
-
+            
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
                 <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
                 <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
