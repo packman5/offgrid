@@ -109,6 +109,13 @@ export default function HostView() {
           />
       )}
 
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/50 backdrop-blur-sm">
+          <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
+          <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
+        </div>
+      </div>
+      
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4 gap-4 bg-black/50" style={{ display: isConnected ? 'none' : 'flex' }}>
             <Card className="w-full max-w-md">
                 <CardHeader>

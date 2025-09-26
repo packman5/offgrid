@@ -14,10 +14,7 @@ export default function HostPage() {
                 </Link>
                 </Button>
                 <h1 className="text-xl font-semibold">Host (Display)</h1>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" data-testid="connection-status-indicator"></div>
-                    <span className="text-sm text-muted-foreground">Disconnected</span>
-                </div>
+                <div className="w-10"></div>
             </header>
             <main className="flex-grow flex items-center justify-center p-0 h-[calc(100vh-65px)]">
                 <HostView />

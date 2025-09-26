@@ -128,8 +128,8 @@ export default function ClientView() {
         </div>
       )}
 
-      {hasCameraPermission && !isConnected && (
-         <div className="absolute top-2 right-2 flex items-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm">
+      {hasCameraPermission && (
+         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm">
             {!offer && (
               <Button onClick={createOffer} size="sm" disabled={!hasCameraPermission || !!offer}>
                 <QrCode className="mr-2"/> Create Offer
@@ -150,6 +150,12 @@ export default function ClientView() {
                 </DialogContent>
               </Dialog>
             )}
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
+                <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
+                <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
+            </div>
+
             <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer}>
                 <ScanLine className="mr-2" /> Scan Answer
             </Button>
@@ -173,11 +179,6 @@ export default function ClientView() {
           </Dialog>
       )}
 
-      {isConnected && (
-        <div className="absolute top-2 right-2 bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium">
-          Connected
-        </div>
-      )}
     </div>
   );
 }

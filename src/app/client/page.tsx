@@ -14,10 +14,7 @@ export default function ClientPage() {
           </Link>
         </Button>
         <h1 className="text-xl font-semibold">Client (Camera)</h1>
-         <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" data-testid="connection-status-indicator"></div>
-            <span className="text-sm text-muted-foreground">Disconnected</span>
-        </div>
+         <div className="w-10"></div>
       </header>
       <main className="flex-grow p-4 md:p-6 lg:p-8 flex items-center justify-center">
         <div className="w-full max-w-2xl">
