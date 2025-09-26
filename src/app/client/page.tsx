@@ -1,4 +1,4 @@
-import HostView from '@/components/host-view';
+import ClientView from '@/components/client-view';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ export default function ClientPage() {
       </header>
       <main className="flex-grow p-4 md:p-6 lg:p-8 flex items-center justify-center">
         <div className="w-full max-w-2xl">
-            <HostView />
+            <ClientView />
         </div>
       </main>
     </div>

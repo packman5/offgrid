@@ -34,7 +34,7 @@ export default function ClientView() {
 
   return (
     <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg bg-black relative">
-      <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+      <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
       {hasCameraPermission === false && (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           <Alert variant="destructive" className="max-w-sm">

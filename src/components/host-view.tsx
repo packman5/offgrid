@@ -7,71 +7,13 @@ import { Button } from './ui/button';
 import { Zap, ZapOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { WakeLockSentinel } from 'next/dist/shared/lib/hooks-client-context';
-import { Switch } from './ui/switch';
 
 export default function HostView() {
   const [zoom, setZoom] = useState(1);
   const [overlayOpacity, setOverlayOpacity] = useState(0.5);
   const [isFlashOn, setIsFlashOn] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const { toast } = useToast();
-  const [keepScreenOn, setKeepScreenOn] = useState(false);
-  let wakeLock: WakeLockSentinel | null = null;
-
 
   const videoPlaceholder = PlaceHolderImages.find(p => p.id === 'client-video-feed');
-
-  const handleWakeLock = async (enabled: boolean) => {
-    if (enabled) {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-          toast({
-            title: 'Screen Lock Active',
-            description: 'The screen will stay on while viewing the feed.',
-          });
-          wakeLock.addEventListener('release', () => {
-            setKeepScreenOn(false);
-          });
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Unsupported Feature',
-            description: 'Screen Wake Lock is not supported by your browser.',
-          });
-          setKeepScreenOn(false);
-        }
-      } catch (err) {
-        console.error('Failed to request wake lock:', err);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not activate screen lock.',
-        });
-        setKeepScreenOn(false);
-      }
-    } else {
-      if (wakeLock !== null) {
-        await wakeLock.release();
-        wakeLock = null;
-      }
-    }
-  };
-
-  useEffect(() => {
-    handleWakeLock(keepScreenOn);
-
-    return () => {
-      if (wakeLock !== null) {
-        wakeLock.release().then(() => {
-          wakeLock = null;
-        });
-      }
-    };
-  }, [keepScreenOn, toast]);
 
   return (
     <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg bg-black relative">
@@ -104,10 +46,10 @@ export default function HostView() {
       </div>
       
       <div
-        className="absolute right-4 top-1/2 -translate-y-1/2 h-1/2 w-8 backdrop-blur-md rounded-lg p-1 flex flex-col items-center justify-center space-y-2 transition-opacity group"
+        className="absolute right-4 top-1/2 -translate-y-1/2 h-auto w-auto backdrop-blur-md rounded-lg p-2 flex flex-col items-center justify-center space-y-4 transition-opacity group"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
-        <div className="h-1/2 flex flex-col items-center justify-center gap-2 text-white w-full">
+        <div className="h-32 flex flex-col items-center justify-center text-white w-full">
             <Slider
               id="zoom"
               orientation="vertical"
@@ -119,7 +61,7 @@ export default function HostView() {
               className="h-full"
             />
         </div>
-        <div className="h-1/2 flex flex-col items-center justify-center gap-2 text-white w-full">
+        <div className="h-32 flex flex-col items-center justify-center text-white w-full">
             <Slider
                 id="opacity"
                 orientation="vertical"

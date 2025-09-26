@@ -1,4 +1,4 @@
-import ClientView from "@/components/client-view";
+import HostView from "@/components/host-view";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,11 @@ export default function HostPage() {
                 <h1 className="text-xl font-semibold">Host Mode (Display)</h1>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-sm text-muted-foreground">Connected</span>
+                    <span className="text-sm text-muted-foreground">Ready</span>
                 </div>
             </header>
             <main className="flex-grow flex items-center justify-center p-0 h-[calc(100vh-65px)]">
-                <ClientView />
+                <HostView />
             </main>
         </div>
     );
