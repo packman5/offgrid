@@ -12,7 +12,7 @@ export default function RoleSelectorPage() {
           OffGrid Camera
         </h1>
         <p className="mt-2 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Choose your role to begin. One device acts as the camera (Host), and the other as the screen (Client).
+          Choose your role to begin. One device acts as the display (Host), and the other as the camera (Client).
         </p>
       </header>
 
@@ -20,17 +20,17 @@ export default function RoleSelectorPage() {
         <Card className="hover:border-primary transition-colors duration-300">
           <Link href="/host" className="block h-full">
             <CardHeader className="flex-row items-center gap-4">
-              <Camera className="w-10 h-10 text-primary" />
+              <Monitor className="w-10 h-10 text-primary" />
               <div>
                 <CardTitle className="text-2xl font-semibold">Host</CardTitle>
-                <CardDescription>This device will be the camera.</CardDescription>
+                <CardDescription>This device will be the display.</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                Use this device to capture video. The screen can be turned off to save power while streaming.
+                View the video stream from the Client device. Control zoom, flashlight, and other settings from here.
               </p>
-              <Button className="w-full" variant="outline">
+              <Button className="w-full">
                 Start as Host
               </Button>
             </CardContent>
@@ -40,17 +40,17 @@ export default function RoleSelectorPage() {
         <Card className="hover:border-primary transition-colors duration-300">
           <Link href="/client" className="block h-full">
             <CardHeader className="flex-row items-center gap-4">
-              <Monitor className="w-10 h-10 text-primary" />
+              <Camera className="w-10 h-10 text-primary" />
               <div>
                 <CardTitle className="text-2xl font-semibold">Client</CardTitle>
-                <CardDescription>This device will be the display.</CardDescription>
+                <CardDescription>This device will be the camera.</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                View the video stream from the Host device. Control zoom and other settings from here.
+                Use this device to capture video. The screen can be turned off to save power while streaming.
               </p>
-              <Button className="w-full">
+              <Button className="w-full" variant="outline">
                 Start as Client
               </Button>
             </CardContent>

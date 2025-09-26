@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Slider } from './ui/slider';
 import { Switch } from './ui/switch';
-import { ZoomIn, Sun, Eye } from 'lucide-react';
+import { Button } from './ui/button';
+import { ZoomIn, Sun, Eye, Zap, ZapOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,7 @@ export default function ClientView() {
   const [zoom, setZoom] = useState(1);
   const [keepScreenOn, setKeepScreenOn] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0.7);
+  const [isFlashOn, setIsFlashOn] = useState(false);
   const { toast } = useToast();
 
   const videoPlaceholder = PlaceHolderImages.find(p => p.id === 'client-video-feed');
@@ -99,7 +101,7 @@ export default function ClientView() {
         className="absolute right-4 top-1/2 -translate-y-1/2 h-2/3 w-20 bg-black/50 backdrop-blur-md rounded-lg p-3 flex flex-col items-center justify-center space-y-4 transition-opacity group"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
-        <div className="flex-grow flex flex-col items-center justify-center gap-2 text-white w-full">
+        <div className="flex-grow-[2] flex flex-col items-center justify-center gap-2 text-white w-full">
             <ZoomIn className="w-5 h-5" />
             <Slider
               id="zoom"
@@ -113,7 +115,7 @@ export default function ClientView() {
             />
             <span className="text-sm font-mono">{zoom.toFixed(1)}x</span>
         </div>
-        <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 text-white w-full h-1/3">
+        <div className="flex-grow flex flex-col items-center justify-center gap-2 text-white w-full">
             <Eye className="w-5 h-5" />
             <Slider
                 id="opacity"
@@ -127,6 +129,18 @@ export default function ClientView() {
             />
             <span className="text-sm font-mono">{(overlayOpacity * 100).toFixed(0)}%</span>
         </div>
+      </div>
+      
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+        <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full bg-black/50 backdrop-blur-md text-white w-12 h-12"
+            onClick={() => setIsFlashOn(!isFlashOn)}
+        >
+            {isFlashOn ? <ZapOff /> : <Zap />}
+            <span className="sr-only">Toggle Flashlight</span>
+        </Button>
       </div>
     </div>
   );

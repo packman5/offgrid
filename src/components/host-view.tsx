@@ -9,15 +9,63 @@ import { Loader, Power, PowerOff, Sparkles, Battery, ScreenShare, ScreenShareOff
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function HostView() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<ManageBackgroundServiceOutput | null>(null);
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [isScreenOn, setIsScreenOn] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Not Supported',
+          description: 'Your browser does not support video streaming.',
+        });
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [toast]);
 
   useEffect(() => {
     const getDeviceStatus = async () => {
@@ -48,47 +96,6 @@ export default function HostView() {
     getDeviceStatus();
   }, []);
 
-  const startCamera = async () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          setIsCameraActive(true);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Error accessing camera:', err);
-        if (err instanceof Error) {
-            setError(`Could not access camera: ${err.message}. Please check permissions.`);
-        } else {
-            setError('An unknown error occurred while accessing the camera.');
-        }
-        setIsCameraActive(false);
-      }
-    } else {
-      setError('Your browser does not support video streaming.');
-    }
-  };
-
-  useEffect(() => {
-    startCamera();
-    // Cleanup
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
   const fetchSuggestion = async () => {
     setIsLoadingSuggestion(true);
     try {
@@ -111,23 +118,25 @@ export default function HostView() {
       <Card className="overflow-hidden aspect-video">
         <div className="relative w-full h-full bg-black flex items-center justify-center">
             <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
             />
-            {!isCameraActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white p-4">
-                {error ? (
-                    <p className="text-center text-red-400">{error}</p>
-                ) : (
-                    <>
-                        <Loader className="animate-spin mb-4" />
-                        <p>Starting camera...</p>
-                    </>
-                )}
-            </div>
+            {hasCameraPermission === false && (
+                <Alert variant="destructive" className="absolute w-auto m-4">
+                    <AlertTitle>Camera Access Required</AlertTitle>
+                    <AlertDescription>
+                        Please allow camera access to use this feature.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {hasCameraPermission === null && (
+                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white p-4">
+                    <Loader className="animate-spin mb-4" />
+                    <p>Starting camera...</p>
+                </div>
             )}
         </div>
       </Card>
