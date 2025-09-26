@@ -3,91 +3,67 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Slider } from './ui/slider';
-import { Switch } from './ui/switch';
 import { Button } from './ui/button';
-import { ZoomIn, Sun, Eye, Zap, ZapOff } from 'lucide-react';
+import { Zap, ZapOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { cn } from '@/lib/utils';
-import { Label } from './ui/label';
-
-let wakeLock: WakeLockSentinel | null = null;
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function HostView() {
   const [zoom, setZoom] = useState(1);
-  const [keepScreenOn, setKeepScreenOn] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0.5);
   const [isFlashOn, setIsFlashOn] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   const videoPlaceholder = PlaceHolderImages.find(p => p.id === 'client-video-feed');
 
-  const handleWakeLock = async (enabled: boolean) => {
-    if (enabled) {
+  useEffect(() => {
+    const getCameraPermission = async () => {
       try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-          toast({
-            title: 'Screen Lock Active',
-            description: 'The screen will stay on while viewing the feed.',
-          });
-          wakeLock.addEventListener('release', () => {
-            setKeepScreenOn(false);
-          });
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Unsupported Feature',
-            description: 'Screen Wake Lock is not supported by your browser.',
-          });
-          setKeepScreenOn(false);
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
         }
-      } catch (err) {
-        console.error('Failed to request wake lock:', err);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'Could not activate screen lock.',
-        });
-        setKeepScreenOn(false);
-      }
-    } else {
-      if (wakeLock !== null) {
-        await wakeLock.release();
-        wakeLock = null;
-      }
-    }
-  };
-
-  useEffect(() => {
-    handleWakeLock(keepScreenOn);
-
-    return () => {
-      if (wakeLock !== null) {
-        wakeLock.release().then(() => {
-          wakeLock = null;
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
         });
       }
     };
-  }, [keepScreenOn, toast]);
+
+    getCameraPermission();
+  }, [toast]);
 
   return (
     <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg bg-black relative">
-      {videoPlaceholder && (
-          <Image
-          src={videoPlaceholder.imageUrl}
-          alt={videoPlaceholder.description}
-          fill
-          priority
-          data-ai-hint={videoPlaceholder.imageHint}
-          className="transition-transform duration-300 ease-in-out object-cover"
-          style={{ transform: `scale(${zoom})` }}
-          />
+      <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+      {hasCameraPermission === false && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          <Alert variant="destructive" className="max-w-sm">
+            <AlertTitle>Camera Access Required</AlertTitle>
+            <AlertDescription>
+              Please allow camera access to use this feature. You may need to grant permissions in your browser settings.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      {hasCameraPermission === null && (
+         <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <p className="text-muted-foreground">Requesting camera permission...</p>
+        </div>
       )}
       <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">LIVE</div>
 
       <div
-        className="absolute top-4 left-4 flex items-center gap-2 p-2 rounded-lg backdrop-blur-md"
+        className="absolute top-4 left-4 flex items-center gap-2 p-1 rounded-lg backdrop-blur-md"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
         <Button
@@ -99,23 +75,13 @@ export default function HostView() {
             {isFlashOn ? <ZapOff /> : <Zap />}
             <span className="sr-only">Toggle Flashlight</span>
         </Button>
-        <div className="flex items-center gap-2">
-            <Sun className="w-5 h-5 text-white" />
-            <Switch
-                id="screen-lock-switch"
-                checked={keepScreenOn}
-                onCheckedChange={setKeepScreenOn}
-                aria-label="Keep screen on"
-            />
-        </div>
       </div>
       
       <div
-        className="absolute right-4 top-1/2 -translate-y-1/2 h-2/3 w-16 backdrop-blur-md rounded-lg p-2 flex flex-col items-center justify-center space-y-4 transition-opacity group"
+        className="absolute right-4 top-1/2 -translate-y-1/2 h-1/2 w-8 backdrop-blur-md rounded-lg p-1 flex flex-col items-center justify-center space-y-2 transition-opacity group"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
-        <div className="flex-grow-[2] flex flex-col items-center justify-center gap-2 text-white w-full">
-            <ZoomIn className="w-5 h-5" />
+        <div className="h-1/2 flex flex-col items-center justify-center gap-2 text-white w-full">
             <Slider
               id="zoom"
               orientation="vertical"
@@ -126,10 +92,8 @@ export default function HostView() {
               onValueChange={(value) => setZoom(value[0])}
               className="h-full"
             />
-            <span className="text-sm font-mono">{zoom.toFixed(1)}x</span>
         </div>
-        <div className="flex-grow flex flex-col items-center justify-center gap-2 text-white w-full">
-            <Eye className="w-5 h-5" />
+        <div className="h-1/2 flex flex-col items-center justify-center gap-2 text-white w-full">
             <Slider
                 id="opacity"
                 orientation="vertical"
@@ -140,7 +104,6 @@ export default function HostView() {
                 onValueChange={(value) => setOverlayOpacity(value[0])}
                 className="h-full"
             />
-            <span className="text-sm font-mono">{(overlayOpacity * 100).toFixed(0)}%</span>
         </div>
       </div>
     </div>
