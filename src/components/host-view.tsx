@@ -6,7 +6,7 @@ import QRCode from 'qrcode.react';
 import QrScanner from 'react-qr-scanner';
 import { Slider } from './ui/slider';
 import { Button } from './ui/button';
-import { Zap, ZapOff, QrCode, Camera, X } from 'lucide-react';
+import { Zap, ZapOff, QrCode, Camera, X, Download } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,6 +73,17 @@ export default function HostView() {
     sendCommand({ type: 'capture' });
   };
   
+  const handleSaveImage = () => {
+    if (!capturedImage) return;
+    const link = document.createElement('a');
+    link.href = capturedImage;
+    link.download = `offgrid-capture-${new Date().toISOString()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Image Saved', description: 'The image has been saved to your downloads.' });
+  };
+
   const createAnswer = async (offerData: string) => {
     if (!offerData) return;
 
@@ -84,21 +95,23 @@ export default function HostView() {
     });
     peerConnectionRef.current = pc;
 
-    const dc = pc.createDataChannel("controls");
-    dataChannelRef.current = dc;
-    dc.onopen = () => console.log("Data channel open");
-    dc.onclose = () => console.log("Data channel closed");
-    dc.onmessage = (event) => {
-        try {
-            const message = JSON.parse(event.data);
-            if (message.type === 'photo') {
-                setCapturedImage(message.data);
-                toast({ title: "Image Captured", description: "Review the image or close to return to live video."});
+    pc.ondatachannel = (event) => {
+        const dc = event.channel;
+        dataChannelRef.current = dc;
+        dc.onopen = () => console.log("Data channel open");
+        dc.onclose = () => console.log("Data channel closed");
+        dc.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'photo') {
+                    setCapturedImage(message.data);
+                    toast({ title: "Image Captured", description: "Review the image or close to return to live video."});
+                }
+            } catch (e) {
+                console.error("Failed to parse message from client", e);
             }
-        } catch (e) {
-            console.error("Failed to parse message from client", e);
-        }
-    };
+        };
+    }
     
     pc.ontrack = (event) => {
         if (remoteVideoRef.current) {
@@ -207,15 +220,26 @@ export default function HostView() {
       {capturedImage && (
         <div className="absolute inset-0 z-20 bg-black">
           <Image src={capturedImage} alt="Captured image" layout="fill" objectFit="contain" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/75"
-            onClick={() => setCapturedImage(null)}
-          >
-            <X size={24} />
-            <span className="sr-only">Close</span>
-          </Button>
+          <div className="absolute top-4 right-4 z-30 flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white bg-black/50 hover:bg-black/75"
+              onClick={handleSaveImage}
+            >
+              <Download size={24} />
+              <span className="sr-only">Save Image</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white bg-black/50 hover:bg-black/75"
+              onClick={() => setCapturedImage(null)}
+            >
+              <X size={24} />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
         </div>
       )}
 
