@@ -13,10 +13,11 @@ export default function HostPage() {
                     <span className="sr-only">Back</span>
                 </Link>
                 </Button>
-                <h1 className="text-xl font-semibold">Host Mode (Display)</h1>
+                <h1 className="text-xl font-semibold">Host (Display)</h1>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-sm text-muted-foreground">Ready</span>
+                    {/* This will be updated based on connection state later */}
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-sm text-muted-foreground">Disconnected</span>
                 </div>
             </header>
             <main className="flex-grow flex items-center justify-center p-0 h-[calc(100vh-65px)]">
