@@ -5,20 +5,14 @@ import { Button } from "@/components/ui/button";
 
 export default function HostPage() {
     return (
-        <div className="min-h-screen bg-black text-foreground flex flex-col">
-            <header className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-sm z-20">
-                <Button variant="ghost" size="icon" asChild>
+        <div className="min-h-screen bg-black text-foreground relative">
+             <Button variant="ghost" size="icon" asChild className="absolute top-4 left-4 z-20 bg-black/50 hover:bg-black/75">
                 <Link href="/">
                     <ArrowLeft />
                     <span className="sr-only">Back</span>
                 </Link>
-                </Button>
-                <h1 className="text-xl font-semibold">Host (Display)</h1>
-                <div className="w-10"></div>
-            </header>
-            <main className="flex-grow flex items-center justify-center p-0 h-[calc(100vh-65px)]">
-                <HostView />
-            </main>
+            </Button>
+            <HostView />
         </div>
     );
 }
