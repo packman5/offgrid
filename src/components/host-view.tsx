@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import QRCode from 'qrcode.react';
+import QrScanner from 'react-qr-scanner';
 import { Slider } from './ui/slider';
 import { Button } from './ui/button';
-import { Zap, ZapOff, ZoomIn, Eye } from 'lucide-react';
+import { Zap, ZapOff, QrCode } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function HostView() {
   const [zoom, setZoom] = useState(1);
@@ -23,6 +24,7 @@ export default function HostView() {
   const [offer, setOffer] = useState('');
   const [answer, setAnswer] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isScanningOffer, setIsScanningOffer] = useState(false);
 
   useEffect(() => {
     const requestWakeLock = async () => {
@@ -45,12 +47,12 @@ export default function HostView() {
       peerConnectionRef.current?.close();
     };
   }, []);
+  
+  const createAnswer = async (offerData: string) => {
+    if (!offerData) return;
 
-  const createAnswer = async () => {
-    if (!offer) {
-        toast({variant: 'destructive', title: "No Offer", description: "Please paste the offer from the client first."});
-        return;
-    }
+    setIsScanningOffer(false);
+    setOffer(offerData);
 
     const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -64,26 +66,28 @@ export default function HostView() {
     };
 
     pc.onicecandidate = event => {
-        if (event.candidate) {
-            // ICE candidate handling
-        } else {
+        if (!event.candidate) {
             setAnswer(JSON.stringify(pc.localDescription));
-            toast({ title: "Answer Created", description: "Copy the answer and send it back to the Client." });
+            toast({ title: "Answer Created", description: "Show this QR code to the Client device." });
         }
     };
 
     pc.onconnectionstatechange = () => {
-        setIsConnected(pc.connectionState === 'connected');
+      const connected = pc.connectionState === 'connected';
+      setIsConnected(connected);
+      if(connected) {
+        toast({ title: "Connection Established!", description: "You are connected to the client."});
+      }
     };
 
     try {
-        const offerObj = JSON.parse(offer);
+        const offerObj = JSON.parse(offerData);
         await pc.setRemoteDescription(new RTCSessionDescription(offerObj));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
+        const answerDesc = await pc.createAnswer();
+        await pc.setLocalDescription(answerDesc);
     } catch (error) {
         console.error("Error creating answer", error);
-        toast({variant: 'destructive', title: "Invalid Offer", description: "The offer format was incorrect."});
+        toast({variant: 'destructive', title: "Invalid Offer QR", description: "The offer format was incorrect."});
     }
   };
 
@@ -92,7 +96,7 @@ export default function HostView() {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-black relative">
-       <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" style={{ display: isConnected ? 'block' : 'none' }} />
+       <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" style={{ transform: `scale(${zoom})`, display: isConnected ? 'block' : 'none' }} />
        {videoPlaceholder && !isConnected && (
           <Image
             src={videoPlaceholder.imageUrl}
@@ -108,24 +112,49 @@ export default function HostView() {
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4 gap-4 bg-black/50" style={{ display: isConnected ? 'none' : 'flex' }}>
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>1. Receive Offer</CardTitle>
+                    <CardTitle>1. Scan Offer from Client</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Label htmlFor="offer">Paste offer from Client:</Label>
-                    <Textarea id="offer" value={offer} onChange={e => setOffer(e.target.value)} placeholder="Paste offer here..." rows={4} />
-                    <Button onClick={createAnswer} className="w-full mt-4" disabled={!offer}>Create Answer</Button>
+                    <Button onClick={() => setIsScanningOffer(true)} className="w-full" disabled={isScanningOffer}>
+                       <QrCode className="mr-2" /> Scan Offer QR
+                    </Button>
+                     {isScanningOffer && (
+                        <Dialog open={isScanningOffer} onOpenChange={setIsScanningOffer}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Scan Offer from Client</DialogTitle>
+                                </DialogHeader>
+                                <QrScanner
+                                    delay={300}
+                                    onError={(err: any) => console.error(err)}
+                                    onScan={(data: any) => data && createAnswer(data.text)}
+                                    style={{ width: '100%' }}
+                                />
+                                <p className="text-center text-sm text-muted-foreground">Position the client's QR code in the frame.</p>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </CardContent>
             </Card>
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>2. Send Answer</CardTitle>
+                    <CardTitle>2. Show Answer to Client</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {answer && (
-                        <div className="space-y-2">
-                          <Label htmlFor="answer">Copy this answer to Client:</Label>
-                          <Textarea id="answer" value={answer} readOnly rows={4} />
-                        </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full">Show Answer QR Code</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Scan with Client Device</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex items-center justify-center p-4 bg-white rounded-lg">
+                            <QRCode value={answer} size={256} />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                 </CardContent>
             </Card>
@@ -133,7 +162,7 @@ export default function HostView() {
 
       <div
         className="absolute top-2 left-2 flex items-center gap-1 p-1 rounded-lg backdrop-blur-md"
-        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`, visibility: isConnected ? 'visible' : 'hidden' }}
       >
         <Button
             variant="ghost"
@@ -147,7 +176,7 @@ export default function HostView() {
       
       <div
         className="absolute right-4 top-1/2 -translate-y-1/2 h-auto w-auto backdrop-blur-md rounded-lg p-2 flex flex-col items-center justify-center space-y-4"
-        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`, visibility: isConnected ? 'visible' : 'hidden' }}
       >
         <div className="h-24 w-8 flex flex-col items-center justify-center text-white">
             <Slider
@@ -169,7 +198,7 @@ export default function HostView() {
                 max={0.9}
                 step={0.1}
                 value={[overlayOpacity]}
-                onValue-change={(value) => setOverlayOpacity(value[0])}
+                onValueChange={(value) => setOverlayOpacity(value[0])}
                 className="h-full"
             />
         </div>

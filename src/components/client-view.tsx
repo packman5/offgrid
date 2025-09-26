@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import QRCode from 'qrcode.react';
+import QrScanner from 'react-qr-scanner';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { QrCode } from 'lucide-react';
 
 export default function ClientView() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,6 +20,7 @@ export default function ClientView() {
   const [answer, setAnswer] = useState('');
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isScanningAnswer, setIsScanningAnswer] = useState(false);
 
 
   useEffect(() => {
@@ -71,16 +74,18 @@ export default function ClientView() {
     peerConnectionRef.current = pc;
 
     pc.onicecandidate = event => {
-      if (event.candidate) {
-        // This is part of the offer, but we'll handle ICE candidates separately later
-      } else {
+      if (!event.candidate) {
         setOffer(JSON.stringify(pc.localDescription));
-        toast({ title: "Offer Created", description: "Copy the offer and send it to the Host device." });
+        toast({ title: "Offer Created", description: "Show this QR code to the Host device." });
       }
     };
     
     pc.onconnectionstatechange = () => {
-        setIsConnected(pc.connectionState === 'connected');
+      const connected = pc.connectionState === 'connected';
+      setIsConnected(connected);
+      if(connected) {
+        toast({ title: "Connection Established!", description: "You are connected to the host."});
+      }
     };
 
     const stream = videoRef.current?.srcObject as MediaStream;
@@ -88,19 +93,19 @@ export default function ClientView() {
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
     }
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    const offerDesc = await pc.createOffer();
+    await pc.setLocalDescription(offerDesc);
   };
 
-  const receiveAnswer = async () => {
-    if (peerConnectionRef.current && answer) {
+  const receiveAnswer = async (answerData: string) => {
+    if (peerConnectionRef.current && answerData) {
       try {
-        const answerObj = JSON.parse(answer);
+        const answerObj = JSON.parse(answerData);
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answerObj));
-        toast({ title: "Connection Established!", description: "The devices should now be connected."});
+        setIsScanningAnswer(false);
       } catch (error) {
         console.error("Error setting remote description", error);
-        toast({ variant: 'destructive', title: "Invalid Answer", description: "The answer format was incorrect." });
+        toast({ variant: 'destructive', title: "Invalid Answer QR", description: "The QR code format was incorrect." });
       }
     }
   };
@@ -115,7 +120,7 @@ export default function ClientView() {
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
                 Please allow camera access to use this feature. You may need to grant permissions in your browser settings.
-              </AlertDescription>
+              </-alertdescription>
             </Alert>
           </div>
         )}
@@ -126,28 +131,54 @@ export default function ClientView() {
         )}
         {isConnected && <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">CONNECTED</div>}
       </div>
+      
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>1. Create Offer</CardTitle>
+          <CardTitle>1. Generate Connection QR</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button onClick={createOffer} className="w-full" disabled={!hasCameraPermission}>Generate Connection Offer</Button>
+          <Button onClick={createOffer} className="w-full" disabled={!hasCameraPermission || !!offer}>Generate Connection QR Code</Button>
           {offer && (
-            <div className="space-y-2">
-              <Label htmlFor="offer">Copy this offer and send to Host:</Label>
-              <Textarea id="offer" value={offer} readOnly rows={4} />
-            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">Show Offer QR Code</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Scan with Host Device</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center justify-center p-4 bg-white rounded-lg">
+                  <QRCode value={offer} size={256} />
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </CardContent>
       </Card>
       <Card className="w-full">
         <CardHeader>
-            <CardTitle>2. Receive Answer</CardTitle>
+            <CardTitle>2. Scan Answer from Host</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            <Label htmlFor="answer">Paste the answer from the Host here:</Label>
-            <Textarea id="answer" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Paste answer here..." rows={4} />
-            <Button onClick={receiveAnswer} className="w-full" disabled={!answer}>Connect</Button>
+            <Button onClick={() => setIsScanningAnswer(true)} className="w-full" disabled={!offer || isScanningAnswer}>
+                <QrCode className="mr-2" /> Scan Answer QR
+            </Button>
+            {isScanningAnswer && (
+                <Dialog open={isScanningAnswer} onOpenChange={setIsScanningAnswer}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Scan Answer from Host</DialogTitle>
+                        </DialogHeader>
+                        <QrScanner
+                            delay={300}
+                            onError={(err: any) => console.error(err)}
+                            onScan={(data: any) => data && receiveAnswer(data.text)}
+                            style={{ width: '100%' }}
+                        />
+                         <p className="text-center text-sm text-muted-foreground">Position the host's QR code in the frame.</p>
+                    </DialogContent>
+                </Dialog>
+            )}
         </CardContent>
       </Card>
     </div>
