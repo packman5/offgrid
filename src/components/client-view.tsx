@@ -120,7 +120,7 @@ export default function ClientView() {
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
                 Please allow camera access to use this feature. You may need to grant permissions in your browser settings.
-              </-alertdescription>
+              </AlertDescription>
             </Alert>
           </div>
         )}
