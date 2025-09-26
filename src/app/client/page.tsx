@@ -15,8 +15,7 @@ export default function ClientPage() {
         </Button>
         <h1 className="text-xl font-semibold">Client (Camera)</h1>
          <div className="flex items-center gap-2">
-            {/* This will be updated based on connection state later */}
-            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" data-testid="connection-status-indicator"></div>
             <span className="text-sm text-muted-foreground">Disconnected</span>
         </div>
       </header>
