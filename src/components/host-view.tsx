@@ -1,25 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Slider } from './ui/slider';
-import { Switch } from './ui/switch';
-import { Button } from './ui/button';
-import { ZoomIn, Sun, Eye, Zap, ZapOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Label } from './ui/label';
+import { getBackgroundServiceSuggestion } from '@/app/actions';
 
-let wakeLock: WakeLockSentinel | null = null;
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Loader, AlertTriangle, Battery, ScreenShare, Power, PowerOff, Zap, ZapOff, Sun, ZoomIn, Eye, Video, VideoOff } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Slider } from './ui/slider';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function HostView() {
-  const [zoom, setZoom] = useState(1);
-  const [keepScreenOn, setKeepScreenOn] = useState(false);
-  const [overlayOpacity, setOverlayOpacity] = useState(0.5);
-  const [isFlashOn, setIsFlashOn] = useState(false);
-  const { toast } = useToast();
+    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isFlashOn, setIsFlashOn] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const [overlayOpacity, setOverlayOpacity] = useState(0.5);
+    const [keepScreenOn, setKeepScreenOn] = useState(false);
+    const { toast } = useToast();
+    const videoPlaceholder = PlaceHolderImages.find(p => p.id === 'client-video-feed');
+    let wakeLock: WakeLockSentinel | null = null;
 
-  const videoPlaceholder = PlaceHolderImages.find(p => p.id === 'client-video-feed');
 
   const handleWakeLock = async (enabled: boolean) => {
     if (enabled) {
@@ -73,19 +78,42 @@ export default function HostView() {
   return (
     <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg bg-black relative">
       {videoPlaceholder && (
-          <Image
+        <Image
           src={videoPlaceholder.imageUrl}
           alt={videoPlaceholder.description}
-          width={1280}
-          height={720}
+          fill
           priority
           data-ai-hint={videoPlaceholder.imageHint}
-          className="transition-transform duration-300 ease-in-out h-full w-auto object-cover"
+          className="transition-transform duration-300 ease-in-out object-cover"
           style={{ transform: `scale(${zoom})` }}
-          />
+        />
       )}
       <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">LIVE</div>
 
+      <div
+        className="absolute top-4 left-4 flex items-center gap-4 p-3 rounded-lg backdrop-blur-md"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+      >
+        <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-white w-10 h-10 hover:bg-white/20"
+            onClick={() => setIsFlashOn(!isFlashOn)}
+        >
+            {isFlashOn ? <ZapOff /> : <Zap />}
+            <span className="sr-only">Toggle Flashlight</span>
+        </Button>
+        <div className="flex items-center gap-2">
+            <Sun className="w-5 h-5 text-white" />
+            <Switch
+                id="screen-lock-switch"
+                checked={keepScreenOn}
+                onCheckedChange={setKeepScreenOn}
+                aria-label="Keep screen on"
+            />
+        </div>
+      </div>
+      
       <div
         className="absolute right-4 top-1/2 -translate-y-1/2 h-2/3 w-20 backdrop-blur-md rounded-lg p-3 flex flex-col items-center justify-center space-y-4 transition-opacity group"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
@@ -117,30 +145,6 @@ export default function HostView() {
                 className="h-full"
             />
             <span className="text-sm font-mono">{(overlayOpacity * 100).toFixed(0)}%</span>
-        </div>
-      </div>
-      
-      <div 
-        className="absolute bottom-4 left-4 flex items-center gap-4 p-3 rounded-lg backdrop-blur-md"
-        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
-      >
-        <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full text-white w-12 h-12 hover:bg-white/20"
-            onClick={() => setIsFlashOn(!isFlashOn)}
-        >
-            {isFlashOn ? <ZapOff /> : <Zap />}
-            <span className="sr-only">Toggle Flashlight</span>
-        </Button>
-        <div className="flex items-center gap-2">
-            <Sun className="w-5 h-5 text-white" />
-            <Switch
-                id="screen-lock-switch"
-                checked={keepScreenOn}
-                onCheckedChange={setKeepScreenOn}
-                aria-label="Keep screen on"
-            />
         </div>
       </div>
     </div>
