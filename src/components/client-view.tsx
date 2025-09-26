@@ -16,7 +16,7 @@ let wakeLock: WakeLockSentinel | null = null;
 export default function ClientView() {
   const [zoom, setZoom] = useState(1);
   const [keepScreenOn, setKeepScreenOn] = useState(false);
-  const [overlayOpacity, setOverlayOpacity] = useState(0.7);
+  const [overlayOpacity, setOverlayOpacity] = useState(0.5);
   const [isFlashOn, setIsFlashOn] = useState(false);
   const { toast } = useToast();
 
@@ -77,28 +77,41 @@ export default function ClientView() {
           <Image
           src={videoPlaceholder.imageUrl}
           alt={videoPlaceholder.description}
-          width={1280}
-          height={720}
+          fill
           priority
           data-ai-hint={videoPlaceholder.imageHint}
-          className="transition-transform duration-300 ease-in-out h-full w-auto object-cover"
+          className="transition-transform duration-300 ease-in-out object-cover"
           style={{ transform: `scale(${zoom})` }}
           />
       )}
       <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">LIVE</div>
 
-      <div className="absolute top-2 right-2 flex items-center gap-2 p-1.5 rounded-md bg-black/50 backdrop-blur-sm">
-        <Sun className="w-4 h-4 text-white" />
-        <Switch
-            id="screen-lock-switch"
-            checked={keepScreenOn}
-            onCheckedChange={setKeepScreenOn}
-            aria-label="Keep screen on"
-        />
-      </div>
-
       <div
-        className="absolute right-4 top-1/2 -translate-y-1/2 h-2/3 w-20 bg-black/50 backdrop-blur-md rounded-lg p-3 flex flex-col items-center justify-center space-y-4 transition-opacity group"
+        className="absolute top-4 left-4 flex items-center gap-4 p-3 rounded-lg backdrop-blur-md"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+      >
+        <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-white w-10 h-10 hover:bg-white/20"
+            onClick={() => setIsFlashOn(!isFlashOn)}
+        >
+            {isFlashOn ? <ZapOff /> : <Zap />}
+            <span className="sr-only">Toggle Flashlight</span>
+        </Button>
+        <div className="flex items-center gap-2">
+            <Sun className="w-5 h-5 text-white" />
+            <Switch
+                id="screen-lock-switch"
+                checked={keepScreenOn}
+                onCheckedChange={setKeepScreenOn}
+                aria-label="Keep screen on"
+            />
+        </div>
+      </div>
+      
+      <div
+        className="absolute right-4 top-1/2 -translate-y-1/2 h-2/3 w-20 backdrop-blur-md rounded-lg p-3 flex flex-col items-center justify-center space-y-4 transition-opacity group"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
         <div className="flex-grow-[2] flex flex-col items-center justify-center gap-2 text-white w-full">
@@ -129,18 +142,6 @@ export default function ClientView() {
             />
             <span className="text-sm font-mono">{(overlayOpacity * 100).toFixed(0)}%</span>
         </div>
-      </div>
-      
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-        <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full bg-black/50 backdrop-blur-md text-white w-12 h-12"
-            onClick={() => setIsFlashOn(!isFlashOn)}
-        >
-            {isFlashOn ? <ZapOff /> : <Zap />}
-            <span className="sr-only">Toggle Flashlight</span>
-        </Button>
       </div>
     </div>
   );

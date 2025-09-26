@@ -19,7 +19,7 @@ export default function HostPage() {
                     <span className="text-sm text-muted-foreground">Connected</span>
                 </div>
             </header>
-            <main className="flex-grow flex items-center justify-center p-0 md:p-4 h-[calc(100vh-65px)]">
+            <main className="flex-grow flex items-center justify-center p-0 h-[calc(100vh-65px)]">
                 <ClientView />
             </main>
         </div>

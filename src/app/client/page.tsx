@@ -17,21 +17,9 @@ export default function ClientPage() {
         <h1 className="text-xl font-semibold">Client Mode (Camera)</h1>
         <div className="w-8"></div>
       </header>
-      <main className="flex-grow p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <main className="flex-grow p-4 md:p-6 lg:p-8 flex items-center justify-center">
+        <div className="w-full max-w-2xl">
             <HostView />
-        </div>
-        <div className="lg:col-span-1">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Camera Preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">
-                        This is the live feed from your device's camera that is being sent to the host.
-                    </p>
-                </CardContent>
-            </Card>
         </div>
       </main>
     </div>
