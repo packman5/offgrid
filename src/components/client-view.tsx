@@ -109,7 +109,7 @@ export default function ClientView() {
   };
 
   return (
-    <div className="w-full h-full relative bg-black">
+    <div className="w-full h-screen relative bg-black">
       <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
       
       {hasCameraPermission === false && (
@@ -129,13 +129,13 @@ export default function ClientView() {
       )}
 
       {hasCameraPermission && (
-         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm">
+         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm z-10">
             {!offer && (
               <Button onClick={createOffer} size="sm" disabled={!hasCameraPermission || !!offer}>
                 <QrCode className="mr-2"/> Create Offer
               </Button>
             )}
-            {offer && (
+            {offer && !isConnected && (
                <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">Show Offer</Button>
@@ -156,7 +156,7 @@ export default function ClientView() {
                 <span className="text-sm text-muted-foreground">{isConnected ? 'Connected' : 'Disconnected'}</span>
             </div>
 
-            <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer}>
+            <Button onClick={() => setIsScanningAnswer(true)} size="sm" disabled={!offer || isScanningAnswer || isConnected}>
                 <ScanLine className="mr-2" /> Scan Answer
             </Button>
          </div>
