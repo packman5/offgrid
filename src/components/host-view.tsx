@@ -6,7 +6,7 @@ import QRCode from 'qrcode.react';
 import QrScanner from 'react-qr-scanner';
 import { Slider } from './ui/slider';
 import { Button } from './ui/button';
-import { Zap, ZapOff, QrCode } from 'lucide-react';
+import { Zap, ZapOff, QrCode, Camera, X } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,8 @@ export default function HostView() {
   const [answer, setAnswer] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isScanningOffer, setIsScanningOffer] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
 
   useEffect(() => {
     const requestWakeLock = async () => {
@@ -66,6 +68,10 @@ export default function HostView() {
     setIsFlashOn(newFlashState);
     sendCommand({ type: 'flash', value: newFlashState });
   }
+
+  const handleCapture = () => {
+    sendCommand({ type: 'capture' });
+  };
   
   const createAnswer = async (offerData: string) => {
     if (!offerData) return;
@@ -82,6 +88,17 @@ export default function HostView() {
     dataChannelRef.current = dc;
     dc.onopen = () => console.log("Data channel open");
     dc.onclose = () => console.log("Data channel closed");
+    dc.onmessage = (event) => {
+        try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'photo') {
+                setCapturedImage(message.data);
+                toast({ title: "Image Captured", description: "Review the image or close to return to live video."});
+            }
+        } catch (e) {
+            console.error("Failed to parse message from client", e);
+        }
+    };
     
     pc.ontrack = (event) => {
         if (remoteVideoRef.current) {
@@ -187,6 +204,21 @@ export default function HostView() {
       </div>
       )}
 
+      {capturedImage && (
+        <div className="absolute inset-0 z-20 bg-black">
+          <Image src={capturedImage} alt="Captured image" layout="fill" objectFit="contain" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-30 text-white bg-black/50 hover:bg-black/75"
+            onClick={() => setCapturedImage(null)}
+          >
+            <X size={24} />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
+      )}
+
       <div className="absolute top-4 right-4 flex items-center justify-center gap-2 p-2 rounded-lg bg-black/50 backdrop-blur-sm z-10">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/80">
             <div className={`w-3 h-3 rounded-full animate-pulse ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} data-testid="connection-status-indicator"></div>
@@ -195,7 +227,7 @@ export default function HostView() {
       </div>
 
       <div
-        className="absolute top-1/4 left-4 flex items-center gap-1 p-2 rounded-lg backdrop-blur-md"
+        className="absolute top-1/4 left-4 flex flex-col items-center gap-2 p-2 rounded-lg backdrop-blur-md"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`}}
       >
         <Button
@@ -207,10 +239,19 @@ export default function HostView() {
         >
             {isFlashOn ? <ZapOff size={24} /> : <Zap size={24} />}
         </Button>
+        <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-white w-10 h-10 hover:bg-white/20"
+            onClick={handleCapture}
+            disabled={!isConnected}
+        >
+            <Camera size={24} />
+        </Button>
       </div>
       
       <div
-        className="absolute right-4 top-1/2 -translate-y-1/2 h-auto w-auto backdrop-blur-md rounded-lg p-2 flex flex-col items-center justify-center space-y-4"
+        className="absolute right-4 top-1/2 -translate-y-1/2 h-auto w-auto backdrop-blur-md rounded-lg p-2 flex flex-col items-center justify-center space-y-4 z-10"
         style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
       >
         <div className="h-24 w-8 flex flex-col items-center justify-center text-white">

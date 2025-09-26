@@ -66,6 +66,28 @@ export default function ClientView() {
 
   }, [toast]);
 
+  const sendPhoto = (photoData: string) => {
+    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
+        const message = { type: 'photo', data: photoData };
+        dataChannelRef.current.send(JSON.stringify(message));
+    }
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current) {
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (context) {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUri = canvas.toDataURL('image/jpeg');
+            sendPhoto(dataUri);
+        }
+    }
+  };
+
   const handleCommand = (command: any) => {
     const stream = videoRef.current?.srcObject as MediaStream;
     if (!stream) return;
@@ -92,6 +114,8 @@ export default function ClientView() {
                 console.error('Error applying zoom constraint:', e);
             });
         }
+    } else if (command.type === 'capture') {
+        handleCapture();
     }
   };
 
